@@ -585,9 +585,8 @@
     <section class="panel">
       <div class="shared-grid">
         <div>
-          <label for="apiKey">DeepSeek API Key</label>
-          <input id="apiKey" type="password" placeholder="请填写你的 DeepSeek API Key" value="sk-62685f74ac234eef90a8cefc9f17b506" />
-          <div class="hint">已沿用原页面内的 API Key。两个功能页签共用同一个 Key，无需重复填写。</div>
+          <label>部署说明</label>
+          <div class="hint">当前页面已改为服务端安全调用模式。部署到 Vercel 并配置 `DEEPSEEK_API_KEY` 后即可直接使用，无需在前端填写 Key。</div>
         </div>
       </div>
 
@@ -678,12 +677,10 @@
   </div>
 
   <script>
-    const API_BASE_URL = "https://api.deepseek.com";
+    const ANALYZE_API_URL = "/api/analyze";
     const MODEL_NAME = "deepseek-chat";
     const LISTING_HISTORY_KEY = "amazonListingDiagnosisHistory";
     const LISTING_HISTORY_LIMIT = 20;
-
-    const apiKeyInput = document.getElementById("apiKey");
 
     const tabButtons = Array.from(document.querySelectorAll(".tab-button"));
     const reviewPanel = document.getElementById("reviewPanel");
@@ -1300,17 +1297,10 @@
     }
 
     async function callDeepSeek(messages, temperature = 0.4) {
-      const apiKey = apiKeyInput.value.trim();
-
-      if (!apiKey || apiKey === "YOUR_DEEPSEEK_API_KEY") {
-        throw new Error("请先填写有效的 DeepSeek API Key。");
-      }
-
-      const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+      const response = await fetch(ANALYZE_API_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           model: MODEL_NAME,
@@ -1319,16 +1309,17 @@
         })
       });
 
+      const payload = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API 请求失败（${response.status}）：${errorText}`);
+        const errorMessage = payload?.error || `API 请求失败（${response.status}）`;
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      const content = result?.choices?.[0]?.message?.content;
+      const content = payload?.content;
 
       if (!content) {
-        throw new Error("API 没有返回可用的分析内容。");
+        throw new Error("服务端没有返回可用的分析内容。");
       }
 
       return content;
@@ -1442,7 +1433,7 @@
         setListingStatus("Listing 诊断完成，可直接复制优化标题与五点，或导出 PDF。", false);
       } catch (error) {
         console.error(error);
-        setListingStatus(error.message || "诊断失败，请检查 API Key、网络或接口返回格式。", true);
+        setListingStatus(error.message || "诊断失败，请检查服务端环境变量、网络或接口返回格式。", true);
       } finally {
         setListingLoadingState(false);
       }
@@ -1480,7 +1471,7 @@
         setStatus(`批量分析完成，共 ${items.length} 条。点击对应按钮即可复制英文回复模板。`, false);
       } catch (error) {
         console.error(error);
-        setStatus(error.message || "分析失败，请检查 API Key、网络或接口返回格式。", true);
+        setStatus(error.message || "分析失败，请检查服务端环境变量、网络或接口返回格式。", true);
       } finally {
         setLoadingState(false);
       }
