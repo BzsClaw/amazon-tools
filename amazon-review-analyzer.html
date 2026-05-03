@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>亚马逊运营分析工具</title>
+  <style>
+    :root {
+      --navy: #0f2747;
+      --navy-2: #15345f;
+      --blue-soft: #eaf1fb;
+      --blue-soft-2: #f4f8fe;
+      --white: #ffffff;
+      --text: #1d2a3a;
+      --muted: #66758a;
+      --border: #d9e3f0;
+      --shadow: 0 16px 40px rgba(15, 39, 71, 0.12);
+      --radius: 16px;
+      --success: #1f7a45;
+      --danger: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #f6f9fe 0%, #eef4fb 100%);
+      color: var(--text);
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin: 32px auto;
+    }
+
+    .top-banner {
+      margin-bottom: 18px;
+      padding: 16px 22px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #fff4bf 0%, #ffe7a3 48%, #fff7d6 100%);
+      border: 1px solid #f2d67a;
+      box-shadow: 0 10px 24px rgba(188, 145, 30, 0.14);
+      color: #7a5600;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: var(--white);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: 32px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 860px;
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.7;
+    }
+
+    .panel {
+      margin-top: 24px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .shared-grid,
+    .input-grid,
+    .field-grid,
+    .bullet-grid,
+    .result-grid,
+    .optimized-grid,
+    .mini-grid,
+    .comparison-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .shared-grid,
+    .input-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .field-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .bullet-grid,
+    .optimized-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .result-grid,
+    .mini-grid,
+    .comparison-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tab-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 24px 0 18px;
+    }
+
+    .tab-button {
+      min-width: 156px;
+      padding: 12px 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--blue-soft-2);
+      color: var(--navy);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: none;
+    }
+
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: var(--white);
+      border-color: transparent;
+      box-shadow: 0 12px 24px rgba(15, 39, 71, 0.18);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .label-row label {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--text);
+      background: #fbfdff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #2f69b2;
+      box-shadow: 0 0 0 4px rgba(47, 105, 178, 0.12);
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .bullet-input {
+      min-height: 96px;
+    }
+
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: var(--white);
+      padding: 14px 22px;
+      border-radius: 14px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 12px 24px rgba(15, 39, 71, 0.18);
+      transition: transform 0.15s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+      transform: none;
+    }
+
+    .status {
+      min-height: 24px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .char-counter {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .char-counter.over-limit {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .results {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .result-item,
+    .diagnosis-section {
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: 0 10px 26px rgba(15, 39, 71, 0.08);
+    }
+
+    .result-item-head,
+    .section-head,
+    .card-header,
+    .optimized-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .result-item-head,
+    .section-head {
+      margin-bottom: 14px;
+    }
+
+    .result-item-title,
+    .section-title {
+      margin: 0;
+      font-size: 19px;
+      color: var(--navy);
+    }
+
+    .result-item-review,
+    .diagnosis-summary {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f7faff;
+      border: 1px solid #dbe6f4;
+      color: #44566d;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .card,
+    .optimized-item,
+    .mini-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 10px 26px rgba(15, 39, 71, 0.08);
+    }
+
+    .card {
+      min-height: 220px;
+    }
+
+    .card h2,
+    .optimized-item h3,
+    .mini-card h3 {
+      margin: 0;
+      color: var(--navy);
+    }
+
+    .card h2 {
+      font-size: 18px;
+    }
+
+    .optimized-item h3,
+    .mini-card h3 {
+      font-size: 16px;
+    }
+
+    .copy-button {
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    .copy-button.copied {
+      background: var(--success);
+    }
+
+    .copy-tip {
+      min-height: 20px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--success);
+    }
+
+    .copy-tip.hidden {
+      visibility: hidden;
+    }
+
+    .tag,
+    .score-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .tag {
+      margin-bottom: 12px;
+      background: var(--blue-soft);
+      color: var(--navy);
+    }
+
+    .score-badge {
+      background: #e3eefc;
+      color: #124175;
+      white-space: nowrap;
+    }
+
+    .content,
+    .optimized-text,
+    .mini-content {
+      white-space: pre-wrap;
+      line-height: 1.75;
+      color: var(--text);
+    }
+
+    .placeholder {
+      color: #90a0b6;
+    }
+
+    .bullet-score-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .bullet-score-card {
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      border: 1px solid var(--border);
+    }
+
+    .bullet-score-card + .bullet-score-card {
+      margin-top: 0;
+    }
+
+    .bullet-score-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .bullet-score-title {
+      margin: 0;
+      font-size: 16px;
+      color: var(--navy);
+    }
+
+    .bullet-problem,
+    .bullet-suggestion {
+      margin-top: 12px;
+    }
+
+    .bullet-label,
+    .mini-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .optimized-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .history-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      margin-bottom: 14px;
+    }
+
+    .history-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid var(--border);
+    }
+
+    .history-meta {
+      min-width: 0;
+    }
+
+    .history-title {
+      margin: 0 0 6px;
+      color: var(--navy);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .history-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .history-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .secondary-button {
+      background: var(--blue-soft-2);
+      color: var(--navy);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    .comparison-box {
+      min-height: 100%;
+    }
+
+    .comparison-box .tag {
+      margin-bottom: 10px;
+    }
+
+    .comparison-bullets {
+      margin-top: 12px;
+    }
+
+    .comparison-bullets .mini-content + .mini-content {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #d6e1ee;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 860px) {
+      .field-grid,
+      .result-grid,
+      .mini-grid,
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .panel,
+      .result-item,
+      .diagnosis-section,
+      .card,
+      .optimized-item,
+      .mini-card {
+        padding: 20px;
+      }
+
+      .hero h1 {
+        font-size: 26px;
+      }
+
+      .top-banner {
+        padding: 14px 16px;
+        font-size: 17px;
+        border-radius: 16px;
+      }
+
+      .result-item-head,
+      .section-head,
+      .card-header,
+      .optimized-item-head,
+      .bullet-score-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .tab-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-banner">差评分析助手 · 商海蟹出品</div>
+    <section class="hero">
+      <h1>亚马逊运营分析工具</h1>
+      <p>
+        一个页面内同时支持差评分析与 Listing 诊断。保留原有差评分析流程，并新增标题、五点、关键词与品类的智能诊断与优化输出。
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="shared-grid">
+        <div>
+          <label for="apiKey">DeepSeek API Key</label>
+          <input id="apiKey" type="password" placeholder="请填写你的 DeepSeek API Key" value="sk-62685f74ac234eef90a8cefc9f17b506" />
+          <div class="hint">已沿用原页面内的 API Key。两个功能页签共用同一个 Key，无需重复填写。</div>
+        </div>
+      </div>
+
+      <div class="tab-nav">
+        <button id="tabReview" class="tab-button active" type="button" data-tab="review">差评分析</button>
+        <button id="tabListing" class="tab-button" type="button" data-tab="listing">Listing诊断</button>
+      </div>
+
+      <div id="reviewPanel" class="tab-panel active">
+        <div class="input-grid">
+          <div>
+            <label for="reviewInput">买家差评内容</label>
+            <textarea id="reviewInput" placeholder="例如：The item arrived late and the packaging was damaged...&#10;&#10;This product stopped working after two days and customer service never replied...&#10;&#10;多条差评请用空行分隔后一起粘贴到这里。"></textarea>
+            <div class="hint">支持一次输入多条差评，请用空行分隔；系统会逐条分析并分别显示结果。</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="analyzeButton" type="button">开始分析</button>
+          <div id="status" class="status">准备就绪。</div>
+        </div>
+
+        <div id="results" class="results"></div>
+      </div>
+
+      <div id="listingPanel" class="tab-panel">
+        <div class="field-grid">
+          <div>
+            <div class="label-row">
+              <label for="listingTitle">标题</label>
+              <div id="titleCharCounter" class="char-counter">0 / 200</div>
+            </div>
+            <input id="listingTitle" type="text" placeholder="请输入当前 Listing 标题" />
+          </div>
+          <div>
+            <label for="productCategory">产品品类</label>
+            <input id="productCategory" type="text" placeholder="例如：Pet Supplies / Kitchen / Home Decor" />
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label for="coreKeywords">核心关键词</label>
+            <input id="coreKeywords" type="text" placeholder="例如：cat water fountain, stainless steel, quiet pump, 2.5L" />
+            <div class="hint">多个关键词请用英文逗号分隔。</div>
+          </div>
+        </div>
+
+        <div class="bullet-grid" style="margin-top: 16px;">
+          <div>
+            <label for="bullet1">Bullet Point 1</label>
+            <textarea id="bullet1" class="bullet-input" placeholder="请输入第 1 条 Bullet Point"></textarea>
+          </div>
+          <div>
+            <label for="bullet2">Bullet Point 2</label>
+            <textarea id="bullet2" class="bullet-input" placeholder="请输入第 2 条 Bullet Point"></textarea>
+          </div>
+          <div>
+            <label for="bullet3">Bullet Point 3</label>
+            <textarea id="bullet3" class="bullet-input" placeholder="请输入第 3 条 Bullet Point"></textarea>
+          </div>
+          <div>
+            <label for="bullet4">Bullet Point 4</label>
+            <textarea id="bullet4" class="bullet-input" placeholder="请输入第 4 条 Bullet Point"></textarea>
+          </div>
+          <div>
+            <label for="bullet5">Bullet Point 5</label>
+            <textarea id="bullet5" class="bullet-input" placeholder="请输入第 5 条 Bullet Point"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="listingAnalyzeButton" type="button">开始诊断</button>
+          <button id="exportPdfButton" class="secondary-button" type="button">导出PDF报告</button>
+          <div id="listingStatus" class="status">准备就绪。</div>
+        </div>
+
+        <div id="listingResults" class="results"></div>
+
+        <div class="history-toolbar">
+          <h2 class="section-title">历史记录</h2>
+          <button id="clearHistoryButton" class="secondary-button" type="button">清空历史</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+
+      <div class="footer-note">
+        提示：这是一个单文件网页，双击即可打开。调用 AI 时需要联网，并且浏览器需允许页面访问网络接口。
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE_URL = "https://api.deepseek.com";
+    const MODEL_NAME = "deepseek-chat";
+    const LISTING_HISTORY_KEY = "amazonListingDiagnosisHistory";
+    const LISTING_HISTORY_LIMIT = 20;
+
+    const apiKeyInput = document.getElementById("apiKey");
+
+    const tabButtons = Array.from(document.querySelectorAll(".tab-button"));
+    const reviewPanel = document.getElementById("reviewPanel");
+    const listingPanel = document.getElementById("listingPanel");
+
+    const analyzeButton = document.getElementById("analyzeButton");
+    const reviewInput = document.getElementById("reviewInput");
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+
+    const listingAnalyzeButton = document.getElementById("listingAnalyzeButton");
+    const exportPdfButton = document.getElementById("exportPdfButton");
+    const clearHistoryButton = document.getElementById("clearHistoryButton");
+    const listingTitleInput = document.getElementById("listingTitle");
+    const titleCharCounterEl = document.getElementById("titleCharCounter");
+    const productCategoryInput = document.getElementById("productCategory");
+    const coreKeywordsInput = document.getElementById("coreKeywords");
+    const bulletInputs = [1, 2, 3, 4, 5].map((index) => document.getElementById(`bullet${index}`));
+    const listingStatusEl = document.getElementById("listingStatus");
+    const listingResultsEl = document.getElementById("listingResults");
+    const historyListEl = document.getElementById("historyList");
+
+    let latestListingReport = null;
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function parseKeywords(rawText) {
+      return rawText
+        .split(/[,，]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function splitReviews(rawText) {
+      return rawText
+        .split(/\n\s*\n+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function extractJson(rawText) {
+      const cleaned = String(rawText || "").trim();
+
+      try {
+        return JSON.parse(cleaned);
+      } catch (error) {
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        if (match) {
+          return JSON.parse(match[0]);
+        }
+        throw error;
+      }
+    }
+
+    function formatDateTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return "未知时间";
+      }
+      return date.toLocaleString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function safeJsonParse(rawValue, fallbackValue) {
+      try {
+        return JSON.parse(rawValue);
+      } catch (error) {
+        return fallbackValue;
+      }
+    }
+
+    function getListingHistory() {
+      return safeJsonParse(window.localStorage.getItem(LISTING_HISTORY_KEY) || "[]", []);
+    }
+
+    function saveListingHistory(history) {
+      window.localStorage.setItem(LISTING_HISTORY_KEY, JSON.stringify(history.slice(0, LISTING_HISTORY_LIMIT)));
+    }
+
+    function updateTitleCounter() {
+      const currentLength = listingTitleInput.value.length;
+      titleCharCounterEl.textContent = `${currentLength} / 200`;
+      titleCharCounterEl.classList.toggle("over-limit", currentLength > 200);
+    }
+
+    function getCurrentListingInput() {
+      return {
+        title: listingTitleInput.value.trim(),
+        productCategory: productCategoryInput.value.trim(),
+        keywords: parseKeywords(coreKeywordsInput.value.trim()),
+        bullets: bulletInputs.map((item) => item.value.trim())
+      };
+    }
+
+    function fillListingForm(record) {
+      listingTitleInput.value = record?.input?.title || "";
+      productCategoryInput.value = record?.input?.productCategory || "";
+      coreKeywordsInput.value = Array.isArray(record?.input?.keywords) ? record.input.keywords.join(", ") : "";
+      bulletInputs.forEach((input, index) => {
+        input.value = record?.input?.bullets?.[index] || "";
+      });
+      updateTitleCounter();
+    }
+
+    function renderHistory() {
+      const history = getListingHistory();
+
+      if (!history.length) {
+        historyListEl.innerHTML = `
+          <div class="card">
+            <div class="tag">暂无记录</div>
+            <div class="content placeholder">每次完成 Listing 诊断后会自动保存到本地，下次打开页面仍可继续查看。</div>
+          </div>
+        `;
+        return;
+      }
+
+      historyListEl.innerHTML = history.map((item, index) => {
+        const title = escapeHtml(item?.input?.title || "未命名 Listing");
+        const category = escapeHtml(item?.input?.productCategory || "未填写品类");
+        const keywords = escapeHtml((item?.input?.keywords || []).join("、") || "无关键词");
+        const createdAt = escapeHtml(formatDateTime(item?.createdAt));
+        return `
+          <div class="history-item">
+            <div class="history-meta">
+              <div class="history-title">${title}</div>
+              <div class="history-desc">品类：${category}\n关键词：${keywords}\n保存时间：${createdAt}</div>
+            </div>
+            <div class="history-actions">
+              <button class="secondary-button" type="button" data-load-history="${index}">加载</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function buildHistoryRecord(input, result) {
+      return {
+        createdAt: new Date().toISOString(),
+        input,
+        result
+      };
+    }
+
+    function storeListingRecord(record) {
+      const history = getListingHistory();
+      history.unshift(record);
+      saveListingHistory(history);
+      renderHistory();
+    }
+
+    function buildLatestListingReport(input, result) {
+      return {
+        createdAt: new Date().toISOString(),
+        input,
+        result
+      };
+    }
+
+    function createPdfHtml(report) {
+      const optimizedBullets = report.result.optimizedListing.bullets.map((item, index) => `
+        <div class="list-row"><span class="label">优化 Bullet ${index + 1}</span><div>${escapeHtml(item)}</div></div>
+      `).join("");
+      const scoredBullets = report.result.bulletScores.map((item, index) => `
+        <div class="score-item">
+          <div class="score-head">Bullet ${index + 1} · ${escapeHtml(String(item.score))}/100</div>
+          <div><strong>原文：</strong>${escapeHtml(report.input.bullets[index] || "")}</div>
+          <div><strong>问题：</strong>${escapeHtml(item.issues)}</div>
+          <div><strong>建议：</strong>${escapeHtml(item.suggestion)}</div>
+        </div>
+      `).join("");
+      const beforeBullets = report.input.bullets.map((item, index) => `<div class="bullet-line"><strong>Bullet ${index + 1}：</strong>${escapeHtml(item)}</div>`).join("");
+      const afterBullets = report.result.optimizedListing.bullets.map((item, index) => `<div class="bullet-line"><strong>Bullet ${index + 1}：</strong>${escapeHtml(item)}</div>`).join("");
+
+      return `
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Listing诊断报告</title>
+          <style>
+            body { font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; margin: 28px; color: #1d2a3a; }
+            h1, h2, h3 { color: #0f2747; margin: 0 0 12px; }
+            .meta, .section, .compare-box, .score-item { border: 1px solid #d9e3f0; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+            .meta { background: #f7faff; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+            .list-row, .bullet-line { margin-bottom: 10px; line-height: 1.7; }
+            .label { display: inline-block; font-weight: 700; color: #0f2747; margin-bottom: 6px; }
+            .score-head { font-weight: 700; color: #0f2747; margin-bottom: 10px; }
+            .small { color: #66758a; font-size: 12px; }
+            @media print { body { margin: 18px; } }
+          </style>
+        </head>
+        <body>
+          <h1>亚马逊 Listing 诊断报告</h1>
+          <div class="meta">
+            <div><strong>生成时间：</strong>${escapeHtml(formatDateTime(report.createdAt))}</div>
+            <div><strong>产品品类：</strong>${escapeHtml(report.input.productCategory)}</div>
+            <div><strong>核心关键词：</strong>${escapeHtml(report.input.keywords.join("，"))}</div>
+          </div>
+
+          <div class="section">
+            <h2>标题诊断</h2>
+            <div class="list-row"><span class="label">当前标题</span><div>${escapeHtml(report.input.title)}</div></div>
+            <div class="list-row"><span class="label">关键词覆盖</span><div>${escapeHtml(report.result.titleDiagnosis.keywordCoverage)}</div></div>
+            <div class="list-row"><span class="label">字符数</span><div>${escapeHtml(report.result.titleDiagnosis.characterCount)}</div></div>
+            <div class="list-row"><span class="label">规范性</span><div>${escapeHtml(report.result.titleDiagnosis.compliance)}</div></div>
+            <div class="list-row"><span class="label">优化标题</span><div>${escapeHtml(report.result.optimizedListing.title)}</div></div>
+          </div>
+
+          <div class="section">
+            <h2>五点评分</h2>
+            ${scoredBullets}
+          </div>
+
+          <div class="section">
+            <h2>关键词密度</h2>
+            <div class="list-row"><span class="label">分布情况</span><div>${escapeHtml(report.result.keywordDensity.distribution)}</div></div>
+            <div class="list-row"><span class="label">缺失关键词</span><div>${escapeHtml(report.result.keywordDensity.missingKeywords)}</div></div>
+            <div class="list-row"><span class="label">布局建议</span><div>${escapeHtml(report.result.keywordDensity.insertionSuggestions)}</div></div>
+          </div>
+
+          <div class="section">
+            <h2>竞争力判断</h2>
+            <div class="list-row"><span class="label">差异化程度</span><div>${escapeHtml(report.result.competitiveness.differentiation)}</div></div>
+            <div class="list-row"><span class="label">亮点</span><div>${escapeHtml(report.result.competitiveness.highlights)}</div></div>
+            <div class="list-row"><span class="label">短板</span><div>${escapeHtml(report.result.competitiveness.weaknesses)}</div></div>
+          </div>
+
+          <div class="section">
+            <h2>优化前后对比</h2>
+            <div class="grid">
+              <div class="compare-box">
+                <h3>优化前</h3>
+                <div class="list-row"><span class="label">标题</span><div>${escapeHtml(report.input.title)}</div></div>
+                ${beforeBullets}
+              </div>
+              <div class="compare-box">
+                <h3>优化后</h3>
+                <div class="list-row"><span class="label">标题</span><div>${escapeHtml(report.result.optimizedListing.title)}</div></div>
+                ${afterBullets}
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>优化版本</h2>
+            <div class="list-row"><span class="label">优化标题</span><div>${escapeHtml(report.result.optimizedListing.title)}</div></div>
+            ${optimizedBullets}
+          </div>
+
+          <div class="small">提示：此报告由本地网页生成，可直接另存为 PDF 分享。</div>
+        </body>
+        </html>
+      `;
+    }
+
+    function exportPdfReport() {
+      if (!latestListingReport) {
+        setListingStatus("请先完成一次 Listing 诊断，再导出 PDF。", true);
+        return;
+      }
+
+      const reportWindow = window.open("", "_blank", "width=960,height=860");
+      if (!reportWindow) {
+        setListingStatus("导出窗口被浏览器拦截，请允许弹窗后重试。", true);
+        return;
+      }
+
+      reportWindow.document.open();
+      reportWindow.document.write(createPdfHtml(latestListingReport));
+      reportWindow.document.close();
+      reportWindow.focus();
+      window.setTimeout(() => {
+        reportWindow.print();
+      }, 300);
+    }
+
+    function switchTab(tabName) {
+      tabButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === tabName);
+      });
+      reviewPanel.classList.toggle("active", tabName === "review");
+      listingPanel.classList.toggle("active", tabName === "listing");
+    }
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? "status error" : "status";
+    }
+
+    function setListingStatus(message, isError = false) {
+      listingStatusEl.textContent = message;
+      listingStatusEl.className = isError ? "status error" : "status";
+    }
+
+    function setLoadingState(isLoading) {
+      analyzeButton.disabled = isLoading;
+      analyzeButton.textContent = isLoading ? "分析中..." : "开始分析";
+    }
+
+    function setListingLoadingState(isLoading) {
+      listingAnalyzeButton.disabled = isLoading;
+      listingAnalyzeButton.textContent = isLoading ? "诊断中..." : "开始诊断";
+    }
+
+    function renderEmptyResults() {
+      resultsEl.innerHTML = `
+        <div class="card">
+          <div class="tag">批量结果</div>
+          <h2>等待分析</h2>
+          <div class="content placeholder">分析完成后，这里会按顺序显示每一条差评的主要抱怨点、情绪状态、英文回复模板和改进建议。</div>
+        </div>
+      `;
+    }
+
+    function renderEmptyListingResults() {
+      listingResultsEl.innerHTML = `
+        <div class="card">
+          <div class="tag">Listing诊断</div>
+          <h2>等待诊断</h2>
+          <div class="content placeholder">提交标题、五点、核心关键词和产品品类后，这里会显示标题诊断、五点评分、关键词密度、竞争力判断和优化版本。</div>
+        </div>
+      `;
+    }
+
+    function renderResults(items) {
+      resultsEl.innerHTML = items.map((item, index) => {
+        const rawComplaint = item.result?.mainComplaint || "未返回结果";
+        const rawEmotion = item.result?.customerEmotion || "未返回结果";
+        const rawReply = item.result?.replyTemplate || "未返回结果";
+        const rawImprovements = item.result?.improvements || "未返回结果";
+
+        const complaint = escapeHtml(rawComplaint);
+        const emotion = escapeHtml(rawEmotion);
+        const reply = escapeHtml(rawReply);
+        const improvements = escapeHtml(rawImprovements);
+        const reviewText = escapeHtml(item.review);
+        const replyForAttr = encodeURIComponent(rawReply);
+
+        return `
+          <div class="result-item">
+            <div class="result-item-head">
+              <h2 class="result-item-title">第 ${index + 1} 条差评</h2>
+              <div class="tag">分析完成</div>
+            </div>
+            <div class="result-item-review">${reviewText}</div>
+            <div class="result-grid">
+              <div class="card">
+                <div class="tag">01</div>
+                <h2>主要抱怨点</h2>
+                <div class="content">${complaint}</div>
+              </div>
+              <div class="card">
+                <div class="tag">02</div>
+                <h2>情绪状态</h2>
+                <div class="content">${emotion}</div>
+              </div>
+              <div class="card">
+                <div class="tag">03</div>
+                <div class="card-header">
+                  <h2>英文回复模板</h2>
+                  <button class="copy-button" type="button" data-copy-text="${replyForAttr}" data-copy-label="复制模板">复制模板</button>
+                </div>
+                <div class="content">${reply}</div>
+                <div class="copy-tip hidden">已复制</div>
+              </div>
+              <div class="card">
+                <div class="tag">04</div>
+                <h2>改进建议</h2>
+                <div class="content">${improvements}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function normalizeListingResult(rawResult, fallbackBullets) {
+      const titleDiagnosis = rawResult?.titleDiagnosis || {};
+      const keywordDensity = rawResult?.keywordDensity || {};
+      const competitiveness = rawResult?.competitiveness || {};
+      const optimizedListing = rawResult?.optimizedListing || {};
+      const bulletScoresRaw = Array.isArray(rawResult?.bulletScores) ? rawResult.bulletScores : [];
+      const optimizedBulletsRaw = Array.isArray(optimizedListing?.bullets) ? optimizedListing.bullets : [];
+
+      const bulletScores = Array.from({ length: 5 }, (_, index) => {
+        const bulletData = bulletScoresRaw[index] || {};
+        return {
+          bulletNumber: index + 1,
+          score: Number.isFinite(Number(bulletData.score)) ? Number(bulletData.score) : 0,
+          issues: bulletData.issues || "未返回问题分析。",
+          suggestion: bulletData.suggestion || "未返回改写建议。",
+          optimizedBullet: bulletData.optimizedBullet || optimizedBulletsRaw[index] || fallbackBullets[index] || ""
+        };
+      });
+
+      const optimizedBullets = Array.from({ length: 5 }, (_, index) => {
+        return optimizedBulletsRaw[index] || bulletScores[index].optimizedBullet || fallbackBullets[index] || "";
+      });
+
+      return {
+        titleDiagnosis: {
+          keywordCoverage: titleDiagnosis.keywordCoverage || "未返回结果。",
+          characterCount: titleDiagnosis.characterCount || "未返回结果。",
+          compliance: titleDiagnosis.compliance || "未返回结果。",
+          optimizedTitle: titleDiagnosis.optimizedTitle || optimizedListing.title || "未返回优化标题。"
+        },
+        bulletScores,
+        keywordDensity: {
+          distribution: keywordDensity.distribution || "未返回结果。",
+          missingKeywords: keywordDensity.missingKeywords || "未返回结果。",
+          insertionSuggestions: keywordDensity.insertionSuggestions || "未返回结果。"
+        },
+        competitiveness: {
+          differentiation: competitiveness.differentiation || "未返回结果。",
+          highlights: competitiveness.highlights || "未返回结果。",
+          weaknesses: competitiveness.weaknesses || "未返回结果。"
+        },
+        optimizedListing: {
+          title: optimizedListing.title || titleDiagnosis.optimizedTitle || "未返回优化标题。",
+          bullets: optimizedBullets
+        }
+      };
+    }
+
+    function renderListingResults(result) {
+      const safeTitleDiagnosis = result.titleDiagnosis;
+      const safeKeywordDensity = result.keywordDensity;
+      const safeCompetitiveness = result.competitiveness;
+      const safeOptimizedListing = result.optimizedListing;
+      const optimizedTitleAttr = encodeURIComponent(safeOptimizedListing.title || "");
+      const fullListingText = [
+        `标题：${safeOptimizedListing.title || ""}`,
+        ...safeOptimizedListing.bullets.map((bullet, index) => `Bullet ${index + 1}：${bullet}`)
+      ].join("\n\n");
+      const fullListingAttr = encodeURIComponent(fullListingText);
+
+      const bulletCards = result.bulletScores.map((item) => {
+        return `
+          <div class="bullet-score-card">
+            <div class="bullet-score-head">
+              <h3 class="bullet-score-title">Bullet ${item.bulletNumber}</h3>
+              <div class="score-badge">${escapeHtml(String(item.score))} / 100</div>
+            </div>
+            <div class="mini-content">${escapeHtml(bulletInputs[item.bulletNumber - 1].value.trim() || "未填写原始内容")}</div>
+            <div class="bullet-problem">
+              <span class="bullet-label">问题</span>
+              <div class="mini-content">${escapeHtml(item.issues)}</div>
+            </div>
+            <div class="bullet-suggestion">
+              <span class="bullet-label">改写建议</span>
+              <div class="mini-content">${escapeHtml(item.suggestion)}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const optimizedBulletItems = safeOptimizedListing.bullets.map((bullet, index) => {
+        const encodedBullet = encodeURIComponent(bullet || "");
+        return `
+          <div class="optimized-item">
+            <div class="optimized-item-head">
+              <h3>优化 Bullet ${index + 1}</h3>
+              <button class="copy-button" type="button" data-copy-text="${encodedBullet}" data-copy-label="一键复制">一键复制</button>
+            </div>
+            <div class="optimized-text">${escapeHtml(bullet || "未返回内容")}</div>
+            <div class="copy-tip hidden">已复制</div>
+          </div>
+        `;
+      }).join("");
+
+      const beforeBulletItems = bulletInputs.map((input, index) => {
+        return `<div class="mini-content"><strong>Bullet ${index + 1}：</strong>${escapeHtml(input.value.trim() || "未填写")}</div>`;
+      }).join("");
+
+      const afterBulletItems = safeOptimizedListing.bullets.map((bullet, index) => {
+        return `<div class="mini-content"><strong>Bullet ${index + 1}：</strong>${escapeHtml(bullet || "未返回内容")}</div>`;
+      }).join("");
+
+      listingResultsEl.innerHTML = `
+        <div class="diagnosis-section">
+          <div class="section-head">
+            <h2 class="section-title">1. 标题诊断</h2>
+            <div class="tag">标题优化</div>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <h3>关键词覆盖</h3>
+              <div class="mini-content">${escapeHtml(safeTitleDiagnosis.keywordCoverage)}</div>
+            </div>
+            <div class="mini-card">
+              <h3>字符数</h3>
+              <div class="mini-content">${escapeHtml(safeTitleDiagnosis.characterCount)}</div>
+            </div>
+            <div class="mini-card" style="grid-column: 1 / -1;">
+              <h3>规范性</h3>
+              <div class="mini-content">${escapeHtml(safeTitleDiagnosis.compliance)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diagnosis-section">
+          <div class="section-head">
+            <h2 class="section-title">2. 五点评分</h2>
+            <div class="tag">逐条评分</div>
+          </div>
+          <div class="bullet-score-list">${bulletCards}</div>
+        </div>
+
+        <div class="diagnosis-section">
+          <div class="section-head">
+            <h2 class="section-title">3. 关键词密度</h2>
+            <div class="tag">分布检查</div>
+          </div>
+          <div class="result-grid">
+            <div class="card">
+              <div class="tag">分布情况</div>
+              <div class="content">${escapeHtml(safeKeywordDensity.distribution)}</div>
+            </div>
+            <div class="card">
+              <div class="tag">缺失关键词</div>
+              <div class="content">${escapeHtml(safeKeywordDensity.missingKeywords)}</div>
+            </div>
+            <div class="card" style="grid-column: 1 / -1; min-height: auto;">
+              <div class="tag">布局建议</div>
+              <div class="content">${escapeHtml(safeKeywordDensity.insertionSuggestions)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diagnosis-section">
+          <div class="section-head">
+            <h2 class="section-title">4. 竞争力判断</h2>
+            <div class="tag">竞争分析</div>
+          </div>
+          <div class="result-grid">
+            <div class="card">
+              <div class="tag">差异化程度</div>
+              <div class="content">${escapeHtml(safeCompetitiveness.differentiation)}</div>
+            </div>
+            <div class="card">
+              <div class="tag">亮点</div>
+              <div class="content">${escapeHtml(safeCompetitiveness.highlights)}</div>
+            </div>
+            <div class="card" style="grid-column: 1 / -1; min-height: auto;">
+              <div class="tag">短板</div>
+              <div class="content">${escapeHtml(safeCompetitiveness.weaknesses)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diagnosis-section">
+          <div class="section-head">
+            <h2 class="section-title">5. 优化版本</h2>
+            <div class="tag">可直接使用</div>
+          </div>
+          <div class="optimized-grid">
+            <div class="optimized-item">
+              <div class="optimized-item-head">
+                <h3>优化标题</h3>
+                <button class="copy-button" type="button" data-copy-text="${optimizedTitleAttr}" data-copy-label="一键复制">一键复制</button>
+              </div>
+              <div class="optimized-text">${escapeHtml(safeOptimizedListing.title)}</div>
+              <div class="copy-tip hidden">已复制</div>
+            </div>
+            ${optimizedBulletItems}
+          </div>
+          <div class="optimized-actions">
+            <button class="copy-button" type="button" data-copy-text="${fullListingAttr}" data-copy-label="复制完整版本">复制完整版本</button>
+          </div>
+          <div class="copy-tip hidden">已复制</div>
+        </div>
+
+        <div class="diagnosis-section">
+          <div class="section-head">
+            <h2 class="section-title">6. 优化前后对比</h2>
+            <div class="tag">直观对比</div>
+          </div>
+          <div class="comparison-grid">
+            <div class="mini-card comparison-box">
+              <div class="tag">优化前</div>
+              <div class="mini-label">原始标题</div>
+              <div class="mini-content">${escapeHtml(listingTitleInput.value.trim() || "未填写")}</div>
+              <div class="comparison-bullets">
+                <div class="mini-label">原始五点</div>
+                ${beforeBulletItems}
+              </div>
+            </div>
+            <div class="mini-card comparison-box">
+              <div class="tag">优化后</div>
+              <div class="mini-label">优化标题</div>
+              <div class="mini-content">${escapeHtml(safeOptimizedListing.title || "未返回内容")}</div>
+              <div class="comparison-bullets">
+                <div class="mini-label">优化五点</div>
+                ${afterBulletItems}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function callDeepSeek(messages, temperature = 0.4) {
+      const apiKey = apiKeyInput.value.trim();
+
+      if (!apiKey || apiKey === "YOUR_DEEPSEEK_API_KEY") {
+        throw new Error("请先填写有效的 DeepSeek API Key。");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: MODEL_NAME,
+          temperature,
+          messages
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API 请求失败（${response.status}）：${errorText}`);
+      }
+
+      const result = await response.json();
+      const content = result?.choices?.[0]?.message?.content;
+
+      if (!content) {
+        throw new Error("API 没有返回可用的分析内容。");
+      }
+
+      return content;
+    }
+
+    async function analyzeSingleReview(reviewText) {
+      const systemPrompt = [
+        "You are an expert Amazon negative review analyst.",
+        "Analyze the buyer review and return only valid JSON.",
+        "The JSON must contain exactly these four string fields:",
+        "mainComplaint, customerEmotion, replyTemplate, improvements.",
+        "Requirements:",
+        "1. mainComplaint: summarize the core complaint in Chinese.",
+        "2. customerEmotion: describe the buyer's emotional state in Chinese.",
+        "3. replyTemplate: provide a professional, empathetic English reply template suitable for an Amazon seller.",
+        "4. improvements: explain in Chinese what product or service improvements are needed.",
+        "Do not include markdown fences, explanations, or extra fields."
+      ].join(" ");
+
+      const userPrompt = `Buyer negative review:\n${reviewText}`;
+      const content = await callDeepSeek([
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ], 0.4);
+
+      return extractJson(content);
+    }
+
+    async function analyzeListing() {
+      const title = listingTitleInput.value.trim();
+      const productCategory = productCategoryInput.value.trim();
+      const keywords = parseKeywords(coreKeywordsInput.value.trim());
+      const bullets = bulletInputs.map((item) => item.value.trim());
+
+      if (!title) {
+        setListingStatus("请先输入标题。", true);
+        listingTitleInput.focus();
+        return;
+      }
+
+      if (bullets.some((item) => !item)) {
+        setListingStatus("请完整填写 5 条 Bullet Point。", true);
+        const emptyBullet = bulletInputs.find((item) => !item.value.trim());
+        if (emptyBullet) {
+          emptyBullet.focus();
+        }
+        return;
+      }
+
+      if (!keywords.length) {
+        setListingStatus("请先输入核心关键词。", true);
+        coreKeywordsInput.focus();
+        return;
+      }
+
+      if (!productCategory) {
+        setListingStatus("请先输入产品品类。", true);
+        productCategoryInput.focus();
+        return;
+      }
+
+      setListingLoadingState(true);
+      setListingStatus("正在诊断 Listing，请稍候...");
+
+      const systemPrompt = [
+        "You are an expert Amazon listing optimization consultant.",
+        "Analyze the provided Amazon listing and return only valid JSON.",
+        "All diagnostic text must be in Chinese.",
+        "Optimized title and bullets should match the source language style and be directly usable for an Amazon listing.",
+        "The JSON must contain exactly these keys:",
+        "titleDiagnosis, bulletScores, keywordDensity, competitiveness, optimizedListing.",
+        "titleDiagnosis must be an object with exactly four string fields:",
+        "keywordCoverage, characterCount, compliance, optimizedTitle.",
+        "bulletScores must be an array of exactly 5 objects.",
+        "Each bulletScores item must contain exactly four fields:",
+        "score (number), issues (string), suggestion (string), optimizedBullet (string).",
+        "keywordDensity must be an object with exactly three string fields:",
+        "distribution, missingKeywords, insertionSuggestions.",
+        "competitiveness must be an object with exactly three string fields:",
+        "differentiation, highlights, weaknesses.",
+        "optimizedListing must be an object with exactly two fields:",
+        "title (string), bullets (array of 5 strings).",
+        "Do not include markdown fences, explanations, or extra fields."
+      ].join(" ");
+
+      const userPrompt = [
+        `产品品类：${productCategory}`,
+        `核心关键词：${keywords.join(", ")}`,
+        `当前标题：${title}`,
+        "当前五点：",
+        ...bullets.map((item, index) => `${index + 1}. ${item}`),
+        "请严格从以下五个维度输出诊断结果：",
+        "1. 标题诊断：关键词覆盖、字符数、规范性，并给出优化后的标题；",
+        "2. 五点评分：每条 Bullet 单独打分（满分100），指出问题和改写建议；",
+        "3. 关键词密度：检查核心关键词在标题与五点中的分布情况；",
+        "4. 竞争力判断：分析差异化程度、亮点和短板；",
+        "5. 优化版本：输出可直接使用的完整标题和五条优化 Bullet。"
+      ].join("\n");
+
+      try {
+        const content = await callDeepSeek([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ], 0.35);
+        const rawResult = extractJson(content);
+        const normalizedResult = normalizeListingResult(rawResult, bullets);
+        const listingInput = getCurrentListingInput();
+        latestListingReport = buildLatestListingReport(listingInput, normalizedResult);
+        storeListingRecord(buildHistoryRecord(listingInput, normalizedResult));
+        renderListingResults(normalizedResult);
+        setListingStatus("Listing 诊断完成，可直接复制优化标题与五点，或导出 PDF。", false);
+      } catch (error) {
+        console.error(error);
+        setListingStatus(error.message || "诊断失败，请检查 API Key、网络或接口返回格式。", true);
+      } finally {
+        setListingLoadingState(false);
+      }
+    }
+
+    async function analyzeReview() {
+      const reviewText = reviewInput.value.trim();
+      const reviews = splitReviews(reviewText);
+
+      if (!reviewText) {
+        setStatus("请先粘贴买家差评内容。", true);
+        reviewInput.focus();
+        return;
+      }
+
+      if (!reviews.length) {
+        setStatus("未识别到可分析的差评内容，请检查输入格式。", true);
+        reviewInput.focus();
+        return;
+      }
+
+      setLoadingState(true);
+      setStatus(`正在批量分析，共 ${reviews.length} 条差评，请稍候...`);
+
+      try {
+        const items = [];
+
+        for (let index = 0; index < reviews.length; index += 1) {
+          setStatus(`正在分析第 ${index + 1} / ${reviews.length} 条差评...`);
+          const result = await analyzeSingleReview(reviews[index]);
+          items.push({ review: reviews[index], result });
+        }
+
+        renderResults(items);
+        setStatus(`批量分析完成，共 ${items.length} 条。点击对应按钮即可复制英文回复模板。`, false);
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || "分析失败，请检查 API Key、网络或接口返回格式。", true);
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    document.body.addEventListener("click", async (event) => {
+      const tabButton = event.target.closest("[data-tab]");
+      if (tabButton) {
+        switchTab(tabButton.dataset.tab);
+        return;
+      }
+
+      const loadHistoryButton = event.target.closest("[data-load-history]");
+      if (loadHistoryButton) {
+        const historyIndex = Number(loadHistoryButton.getAttribute("data-load-history"));
+        const history = getListingHistory();
+        const selectedRecord = history[historyIndex];
+        if (!selectedRecord) {
+          setListingStatus("历史记录不存在或已失效。", true);
+          return;
+        }
+        fillListingForm(selectedRecord);
+        latestListingReport = selectedRecord;
+        renderListingResults(selectedRecord.result);
+        setListingStatus("已加载历史记录。", false);
+        switchTab("listing");
+        return;
+      }
+
+      const copyButton = event.target.closest("[data-copy-text]");
+      if (!copyButton) {
+        return;
+      }
+
+      const encodedText = copyButton.getAttribute("data-copy-text") || "";
+      const defaultLabel = copyButton.getAttribute("data-copy-label") || "一键复制";
+      const copyText = encodedText ? decodeURIComponent(encodedText) : "";
+      const tip = copyButton.closest(".card, .optimized-item, .diagnosis-section")?.querySelector(".copy-tip");
+
+      if (!copyText) {
+        if (copyButton.closest("#reviewPanel")) {
+          setStatus("当前还没有可复制的内容。", true);
+        } else {
+          setListingStatus("当前还没有可复制的内容。", true);
+        }
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(copyText);
+        copyButton.classList.add("copied");
+        copyButton.textContent = "已复制";
+        if (tip) {
+          tip.classList.remove("hidden");
+        }
+        window.setTimeout(() => {
+          copyButton.classList.remove("copied");
+          copyButton.textContent = defaultLabel;
+          if (tip) {
+            tip.classList.add("hidden");
+          }
+        }, 1800);
+      } catch (error) {
+        if (copyButton.closest("#reviewPanel")) {
+          setStatus("复制失败，请检查浏览器是否允许访问剪贴板。", true);
+        } else {
+          setListingStatus("复制失败，请检查浏览器是否允许访问剪贴板。", true);
+        }
+      }
+    });
+
+    analyzeButton.addEventListener("click", analyzeReview);
+    listingAnalyzeButton.addEventListener("click", analyzeListing);
+    exportPdfButton.addEventListener("click", exportPdfReport);
+    clearHistoryButton.addEventListener("click", () => {
+      window.localStorage.removeItem(LISTING_HISTORY_KEY);
+      latestListingReport = null;
+      renderHistory();
+      setListingStatus("历史记录已清空。", false);
+    });
+    listingTitleInput.addEventListener("input", updateTitleCounter);
+
+    reviewInput.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        analyzeReview();
+      }
+    });
+
+    bulletInputs.forEach((input) => {
+      input.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+          analyzeListing();
+        }
+      });
+    });
+
+    renderEmptyResults();
+    renderEmptyListingResults();
+    updateTitleCounter();
+    renderHistory();
+  </script>
+</body>
+</html>
